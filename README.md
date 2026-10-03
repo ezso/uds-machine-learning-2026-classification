@@ -1,6 +1,6 @@
 # UdS Machine Learning 2026 — Classification
 
-Notebook-based experiments for predicting bike-demand **`Demand_Category`** from weather, calendar, and bike-service features. The project compares logistic regression, tree ensembles, and neural networks across several cleaning and feature-engineering strategies.
+Notebook-based experiments for predicting hourly bike-demand **`Demand_Category`** on the Seoul Bike Sharing dataset from weather, calendar, and bike-service features. The project compares logistic regression, tree ensembles, and neural networks across several cleaning and feature-engineering strategies.
 
 ## Data
 
@@ -27,6 +27,8 @@ The supplied `train.csv` contains **7,093 rows** with the classification target;
 
 The cleaning workflow inspects data quality, corrects season labels using dates, adds month, and compares removing anomalous rows with replacing individual readings by missing values. Weather thresholds are experiment assumptions that change the available training population.
 
+The committed cleaned datasets contain 4,949 rows in `train_clean.csv`, 6,311 in the cleaned missing-value and imputed variants, and 6,455 in the preserved variants. Preserved variants retain rows after invalid-hour filtering; they do not retain every row of the original 7,093-row input.
+
 ## Notebooks
 
 | Notebook | Contents |
@@ -45,6 +47,18 @@ The main comparison uses four datasets: raw, preserved/imputed, cleaned/imputed,
 5. Cyclic time encodings.
 
 Evaluation uses **five-fold stratified cross-validation** and **macro-F1**, which gives each class equal weight. Higher scores are better. The tree notebook additionally evaluates XGBoost and LightGBM directly on `train_clean_nan.csv` and `train_preserved_nan.csv` to compare native missing-value handling with imputation.
+
+## Recorded results
+
+The updated notebooks report the following best configurations from their saved experiments. These are validation results, not test-set leaderboard scores or newly rerun results.
+
+| Model | Dataset and feature stage | Macro-F1 |
+| --- | --- | --- |
+| Logistic regression | `train_clean`, cyclic time | 0.7391 ± 0.0150 |
+| FT-Transformer | `train_clean_imputed`, cyclic time | 0.8844 ± 0.0054 |
+| LightGBM | `train_clean_nan`, cyclic time and native missing-value handling | 0.9028 |
+
+The final submission workflow selects the LightGBM configuration. Its tree notebook also contains out-of-fold classification reports, a confusion matrix, and per-class metrics for inspecting mistakes beyond the aggregate score.
 
 ## Setup
 
@@ -82,3 +96,5 @@ The final cells check row counts, class values, missing predictions, and matchin
 ## Reproducibility notes
 
 Restart the kernel before a fresh run. Neural-network preprocessing fits imputers and encoders within each training fold, but the pre-imputed CSV variants were generated before model cross-validation; their scores may benefit from information shared across folds. For strict model-selection estimates, fit all learned preprocessing within the training fold. Cleaning variants contain different numbers of rows, which also affects direct comparisons between their scores.
+
+The final summary pivot in `logistic_regression.ipynb` uses `.str.split(" | ")`, which treats the separator as a regular expression and can produce duplicate pivot entries. Use `.str.split(" | ", regex=False)` in both split expressions before running that summary cell. Earlier result tables remain available. The READMEs document the current notebooks; notebook code has not been changed.
